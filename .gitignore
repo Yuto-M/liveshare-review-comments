@@ -1,0 +1,5 @@
+node_modules/
+dist/
+*.vsix
+.review-comments.json
+.DS_Store
