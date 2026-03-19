@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { ReviewCommentController } from './commentController';
-import { watchStorage } from './storage';
+import { watchStorage, storageUri } from './storage';
 import { exportToFile, copyToClipboard } from './exporter';
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -9,36 +9,38 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.window.showWarningMessage('Review Comments: No workspace folder found.');
     return;
   }
-  const workspaceRoot = workspaceFolders[0].uri.fsPath;
+  const folder = workspaceFolders[0];
 
-  const controller = new ReviewCommentController(context, workspaceRoot);
+  const controller = new ReviewCommentController(context, folder);
+
+  async function autoSaveDirtyStorageDoc(): Promise<void> {
+    const uri = storageUri(folder);
+    const doc = vscode.workspace.textDocuments.find(d => d.uri.toString() === uri.toString());
+    if (doc?.isDirty) {
+      await doc.save();
+    }
+  }
 
   // Watch .review-comments.json for external changes (LiveShare sync)
-  const watcher = watchStorage(workspaceRoot, () => {
-    controller.syncFromStorage();
+  const watcher = watchStorage(folder, () => {
+    void autoSaveDirtyStorageDoc();
+    void controller.syncFromStorage();
   });
   context.subscriptions.push(watcher);
 
-  // Command: Add Review Comment
-  context.subscriptions.push(
-    vscode.commands.registerCommand('liveshareReviewComments.addComment', async () => {
-      const text = await vscode.window.showInputBox({
-        prompt: 'Enter review comment',
-        placeHolder: 'Your comment...',
-      });
-      if (text === undefined || text.trim() === '') {
-        return;
-      }
-      controller.addReviewCommentFromSelection(text.trim());
-    })
-  );
+  // Polling fallback: file watcher does not fire for remote changes in Live Share
+  const syncTimer = setInterval(() => {
+    void autoSaveDirtyStorageDoc();
+    void controller.syncFromStorage();
+  }, 2000);
+  context.subscriptions.push({ dispose: () => clearInterval(syncTimer) });
 
   // Reply handler (called from the thread reply widget)
   context.subscriptions.push(
     vscode.commands.registerCommand(
       'liveshareReviewComments.replyToThread',
       (reply: vscode.CommentReply) => {
-        controller.replyToThread(reply.thread, reply.text);
+        void controller.replyToThread(reply.thread, reply.text);
       }
     )
   );
@@ -48,7 +50,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand(
       'liveshareReviewComments.deleteComment',
       (comment: vscode.Comment) => {
-        controller.deleteCommentById(comment.contextValue);
+        void controller.deleteCommentById(comment.contextValue);
       }
     )
   );
@@ -58,7 +60,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.commands.registerCommand(
       'liveshareReviewComments.deleteThread',
       (thread: vscode.CommentThread) => {
-        controller.deleteThread(thread);
+        void controller.deleteThread(thread);
       }
     )
   );
@@ -67,7 +69,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand('liveshareReviewComments.exportForAI', async () => {
       const threads = controller.getAllThreads();
-      await exportToFile(workspaceRoot, threads);
+      await exportToFile(folder, threads);
     })
   );
 
@@ -75,7 +77,7 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.commands.registerCommand('liveshareReviewComments.copyToClipboard', async () => {
       const threads = controller.getAllThreads();
-      await copyToClipboard(threads, workspaceRoot);
+      await copyToClipboard(threads);
     })
   );
 }

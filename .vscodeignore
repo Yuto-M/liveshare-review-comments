@@ -4,3 +4,4 @@ esbuild.js
 tsconfig.json
 .gitignore
 **/*.map
+.review-comments.json

@@ -1,5 +1,3 @@
-import * as fs from 'fs';
-import * as path from 'path';
 import * as vscode from 'vscode';
 
 export interface StoredComment {
@@ -11,7 +9,7 @@ export interface StoredComment {
 
 export interface StoredThread {
   id: string;
-  uri: string;
+  relativePath: string; // workspace-relative path (e.g. "src/file.ts")
   startLine: number; // 1-based
   endLine: number;   // 1-based
   comments: StoredComment[];
@@ -23,40 +21,31 @@ interface StorageData {
 
 const STORAGE_FILE = '.review-comments.json';
 
-function storagePath(workspaceRoot: string): string {
-  return path.join(workspaceRoot, STORAGE_FILE);
+export function storageUri(folder: vscode.WorkspaceFolder): vscode.Uri {
+  return vscode.Uri.joinPath(folder.uri, STORAGE_FILE);
 }
 
-function isValidThread(t: unknown, workspaceRoot: string): t is StoredThread {
+function isValidThread(t: unknown): t is StoredThread {
   if (!t || typeof t !== 'object') {
     return false;
   }
   const obj = t as Record<string, unknown>;
   if (
     typeof obj.id !== 'string' ||
-    typeof obj.uri !== 'string' ||
+    typeof obj.relativePath !== 'string' ||
     typeof obj.startLine !== 'number' ||
     typeof obj.endLine !== 'number' ||
     !Array.isArray(obj.comments)
   ) {
     return false;
   }
-  // Reject negative or excessively large line numbers
+  // Reject path traversal
+  if (obj.relativePath.includes('..') || (obj.relativePath as string).startsWith('/')) {
+    return false;
+  }
   if (obj.startLine < 1 || obj.endLine < 1 || obj.startLine > 100000 || obj.endLine > 100000) {
     return false;
   }
-  // Reject URIs outside the workspace
-  try {
-    const fsPath = vscode.Uri.parse(obj.uri as string).fsPath;
-    const normalized = path.normalize(fsPath);
-    const root = path.normalize(workspaceRoot);
-    if (!normalized.startsWith(root + path.sep) && normalized !== root) {
-      return false;
-    }
-  } catch {
-    return false;
-  }
-  // Validate each comment entry
   for (const c of obj.comments as unknown[]) {
     if (!c || typeof c !== 'object') {
       return false;
@@ -74,35 +63,55 @@ function isValidThread(t: unknown, workspaceRoot: string): t is StoredThread {
   return true;
 }
 
-export function loadThreads(workspaceRoot: string): StoredThread[] {
-  const file = storagePath(workspaceRoot);
-  if (!fs.existsSync(file)) {
-    return [];
-  }
+export async function loadThreads(folder: vscode.WorkspaceFolder): Promise<StoredThread[]> {
+  const uri = storageUri(folder);
   try {
-    const raw = fs.readFileSync(file, 'utf-8');
+    const bytes = await vscode.workspace.fs.readFile(uri);
+    const raw = Buffer.from(bytes).toString('utf-8');
     const data: unknown = JSON.parse(raw);
     if (!data || typeof data !== 'object' || !Array.isArray((data as Record<string, unknown>).threads)) {
       return [];
     }
     const threads = (data as Record<string, unknown>).threads as unknown[];
-    return threads.filter((t) => isValidThread(t, workspaceRoot)) as StoredThread[];
+    return threads.filter(isValidThread) as StoredThread[];
   } catch {
     return [];
   }
 }
 
-export function saveThreads(workspaceRoot: string, threads: StoredThread[]): void {
-  const file = storagePath(workspaceRoot);
-  const data: StorageData = { threads };
-  fs.writeFileSync(file, JSON.stringify(data, null, 2), 'utf-8');
+export async function saveThreads(folder: vscode.WorkspaceFolder, threads: StoredThread[]): Promise<void> {
+  const uri = storageUri(folder);
+  const content = JSON.stringify({ threads } satisfies StorageData, null, 2);
+
+  // Use WorkspaceEdit + doc.save() so LiveShare propagates the write to HOST's disk.
+  // vscode.workspace.fs.writeFile() does not propagate from GUEST to HOST in LiveShare.
+
+  // Step 1: ensure the file exists.
+  // createFile() with ignoreIfExists:true propagates through LiveShare (unlike writeFile).
+  const createEdit = new vscode.WorkspaceEdit();
+  createEdit.createFile(uri, { ignoreIfExists: true });
+  await vscode.workspace.applyEdit(createEdit);
+
+  // Step 2: open (or reuse the already-open) document and overwrite its full content.
+  const doc = await vscode.workspace.openTextDocument(uri);
+  const fullRange = new vscode.Range(
+    doc.positionAt(0),
+    doc.positionAt(doc.getText().length)
+  );
+  const edit = new vscode.WorkspaceEdit();
+  edit.replace(uri, fullRange, content);
+  const applied = await vscode.workspace.applyEdit(edit);
+  if (!applied) {
+    throw new Error('WorkspaceEdit.applyEdit() returned false — changes were not saved');
+  }
+  await doc.save();
 }
 
 export function watchStorage(
-  workspaceRoot: string,
+  folder: vscode.WorkspaceFolder,
   onChange: () => void
 ): vscode.FileSystemWatcher {
-  const pattern = new vscode.RelativePattern(workspaceRoot, STORAGE_FILE);
+  const pattern = new vscode.RelativePattern(folder, STORAGE_FILE);
   const watcher = vscode.workspace.createFileSystemWatcher(pattern);
   watcher.onDidChange(onChange);
   watcher.onDidCreate(onChange);

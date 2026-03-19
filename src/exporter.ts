@@ -1,9 +1,7 @@
-import * as fs from 'fs';
-import * as path from 'path';
 import * as vscode from 'vscode';
 import { StoredThread } from './storage';
 
-export function buildMarkdown(threads: StoredThread[], workspaceRoot?: string): string {
+export function buildMarkdown(threads: StoredThread[]): string {
   if (threads.length === 0) {
     return '# Review Comments\n\n> No comments yet.\n';
   }
@@ -16,20 +14,16 @@ export function buildMarkdown(threads: StoredThread[], workspaceRoot?: string): 
     '',
   ];
 
-  // Group by uri
+  // Group by relativePath
   const byFile = new Map<string, StoredThread[]>();
   for (const t of threads) {
-    const list = byFile.get(t.uri) ?? [];
+    const list = byFile.get(t.relativePath) ?? [];
     list.push(t);
-    byFile.set(t.uri, list);
+    byFile.set(t.relativePath, list);
   }
 
-  for (const [uri, fileThreads] of byFile) {
-    const displayPath = workspaceRoot
-      ? path.relative(workspaceRoot, vscode.Uri.parse(uri).fsPath)
-      : vscode.Uri.parse(uri).fsPath;
-
-    lines.push(`## ${displayPath}`, '');
+  for (const [relativePath, fileThreads] of byFile) {
+    lines.push(`## ${relativePath}`, '');
 
     // Sort threads by start line
     const sorted = [...fileThreads].sort((a, b) => a.startLine - b.startLine);
@@ -51,18 +45,18 @@ export function buildMarkdown(threads: StoredThread[], workspaceRoot?: string): 
 }
 
 export async function exportToFile(
-  workspaceRoot: string,
+  folder: vscode.WorkspaceFolder,
   threads: StoredThread[]
 ): Promise<void> {
-  const md = buildMarkdown(threads, workspaceRoot);
-  const outPath = path.join(workspaceRoot, 'REVIEW.md');
-  fs.writeFileSync(outPath, md, 'utf-8');
-  const doc = await vscode.workspace.openTextDocument(outPath);
+  const md = buildMarkdown(threads);
+  const outUri = vscode.Uri.joinPath(folder.uri, 'liveshare-review-comments.md');
+  await vscode.workspace.fs.writeFile(outUri, Buffer.from(md, 'utf-8'));
+  const doc = await vscode.workspace.openTextDocument(outUri);
   await vscode.window.showTextDocument(doc);
 }
 
-export async function copyToClipboard(threads: StoredThread[], workspaceRoot?: string): Promise<void> {
-  const md = buildMarkdown(threads, workspaceRoot);
+export async function copyToClipboard(threads: StoredThread[]): Promise<void> {
+  const md = buildMarkdown(threads);
   await vscode.env.clipboard.writeText(md);
   vscode.window.showInformationMessage('Review comments copied to clipboard.');
 }

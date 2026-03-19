@@ -6,15 +6,15 @@
   "engines": {
     "vscode": "^1.85.0"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Yuto-M/liveshare-review-comments"
+  },
   "categories": ["Other"],
   "activationEvents": ["onStartupFinished"],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
-      {
-        "command": "liveshareReviewComments.addComment",
-        "title": "Add Review Comment"
-      },
       {
         "command": "liveshareReviewComments.exportForAI",
         "title": "Export Review Comments for AI"
@@ -37,15 +37,7 @@
       }
     ],
     "menus": {
-      "editor/context": [
-        {
-          "command": "liveshareReviewComments.addComment",
-          "when": "editorHasSelection || editorTextFocus",
-          "group": "review@1"
-        }
-      ],
       "commandPalette": [
-        { "command": "liveshareReviewComments.addComment" },
         { "command": "liveshareReviewComments.exportForAI" },
         { "command": "liveshareReviewComments.copyToClipboard" },
         { "command": "liveshareReviewComments.replyToThread", "when": "false" },

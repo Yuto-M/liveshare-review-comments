@@ -11,32 +11,32 @@ function uuid(): string {
 
 export class ReviewCommentController {
   private readonly controller: vscode.CommentController;
-  private readonly workspaceRoot: string;
+  private readonly workspaceFolder: vscode.WorkspaceFolder;
   // Map from thread id → { vscodeThread, storedThread, cachedVscodeComments }
   private readonly threads = new Map<
     string,
     { vt: vscode.CommentThread; st: StoredThread; vc: vscode.Comment[] }
   >();
 
-  constructor(context: vscode.ExtensionContext, workspaceRoot: string) {
-    this.workspaceRoot = workspaceRoot;
+  constructor(context: vscode.ExtensionContext, folder: vscode.WorkspaceFolder) {
+    this.workspaceFolder = folder;
     this.controller = vscode.comments.createCommentController(
       'liveshareReviewComments',
       'LiveShare Review Comments'
     );
     context.subscriptions.push(this.controller);
-    this.restore();
+    void this.restore();
   }
 
-  private restore(): void {
-    const stored = loadThreads(this.workspaceRoot);
+  private async restore(): Promise<void> {
+    const stored = await loadThreads(this.workspaceFolder);
     for (const st of stored) {
       this.createVscodeThread(st);
     }
   }
 
   private createVscodeThread(st: StoredThread): vscode.CommentThread {
-    const uri = vscode.Uri.parse(st.uri);
+    const uri = vscode.Uri.joinPath(this.workspaceFolder.uri, st.relativePath);
     // Convert 1-based stored lines to 0-based Range
     const range = new vscode.Range(st.startLine - 1, 0, st.endLine - 1, 0);
     const vc = st.comments.map((c) => this.toVscodeComment(c));
@@ -59,41 +59,38 @@ export class ReviewCommentController {
     } as vscode.Comment;
   }
 
-  private save(): void {
-    const all: StoredThread[] = [...this.threads.values()].map((e) => e.st);
-    saveThreads(this.workspaceRoot, all);
+  private async save(): Promise<void> {
+    // Read-modify-write: merge with disk to preserve peer's threads
+    const diskThreads = await loadThreads(this.workspaceFolder);
+    const diskById = new Map(diskThreads.map((t) => [t.id, t]));
+    const memById = new Map([...this.threads.values()].map((e) => [e.st.id, e.st]));
+
+    const merged: StoredThread[] = [];
+    for (const [id, diskThread] of diskById) {
+      merged.push(memById.get(id) ?? diskThread);
+    }
+    for (const [id, memThread] of memById) {
+      if (!diskById.has(id)) {
+        merged.push(memThread);
+      }
+    }
+
+    await saveThreads(this.workspaceFolder, merged).catch((err: unknown) => {
+      vscode.window.showErrorMessage(`LiveShare Review Comments: Failed to save — ${String(err)}`);
+    });
   }
 
-  /** Called from command: Add Review Comment */
-  addReviewCommentFromSelection(text: string): void {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) {
-      return;
-    }
-    const sel = editor.selection;
-    // 1-based
-    const startLine = sel.start.line + 1;
-    const endLine = sel.end.line + 1;
-    const author = getAuthor();
-    const comment: StoredComment = {
-      id: uuid(),
-      author,
-      body: text,
-      createdAt: new Date().toISOString(),
-    };
-    const st: StoredThread = {
-      id: uuid(),
-      uri: editor.document.uri.toString(),
-      startLine,
-      endLine,
-      comments: [comment],
-    };
-    this.createVscodeThread(st);
-    this.save();
+  // For deletions: write memory as-is so deleted threads are removed from disk.
+  // Skips the read-modify-write merge to avoid resurrecting deleted threads from disk.
+  private async saveAfterDelete(): Promise<void> {
+    const all = [...this.threads.values()].map((e) => e.st);
+    await saveThreads(this.workspaceFolder, all).catch((err: unknown) => {
+      vscode.window.showErrorMessage(`LiveShare Review Comments: Failed to save — ${String(err)}`);
+    });
   }
 
   /** Called from the reply box inside a thread */
-  replyToThread(thread: vscode.CommentThread, text: string): void {
+  async replyToThread(thread: vscode.CommentThread, text: string): Promise<void> {
     const entry = this.findByVscodeThread(thread);
     const comment: StoredComment = {
       id: uuid(),
@@ -104,10 +101,10 @@ export class ReviewCommentController {
     const vc = this.toVscodeComment(comment);
 
     if (!entry) {
-      // VS Code created this thread via gutter icon — register it now
+      // Thread created by another controller (e.g. Live Share) — register it now
       const st: StoredThread = {
         id: uuid(),
-        uri: thread.uri.toString(),
+        relativePath: vscode.workspace.asRelativePath(thread.uri, false),
         startLine: (thread.range?.start.line ?? 0) + 1,
         endLine: (thread.range?.end.line ?? 0) + 1,
         comments: [comment],
@@ -115,7 +112,7 @@ export class ReviewCommentController {
       thread.comments = [vc];
       thread.collapsibleState = vscode.CommentThreadCollapsibleState.Expanded;
       this.threads.set(st.id, { vt: thread, st, vc: [vc] });
-      this.save();
+      await this.save();
       return;
     }
 
@@ -123,10 +120,10 @@ export class ReviewCommentController {
     entry.st.comments.push(comment);
     entry.vc.push(vc);
     thread.comments = [...entry.vc];
-    this.save();
+    await this.save();
   }
 
-  deleteCommentById(commentId: string | undefined): void {
+  async deleteCommentById(commentId: string | undefined): Promise<void> {
     if (!commentId) {
       return;
     }
@@ -143,24 +140,24 @@ export class ReviewCommentController {
       } else {
         entry.vt.comments = [...entry.vc];
       }
-      this.save();
+      await this.saveAfterDelete();
       return;
     }
   }
 
-  deleteThread(thread: vscode.CommentThread): void {
+  async deleteThread(thread: vscode.CommentThread): Promise<void> {
     const entry = this.findByVscodeThread(thread);
     if (!entry) {
       return;
     }
     thread.dispose();
     this.threads.delete(entry.st.id);
-    this.save();
+    await this.saveAfterDelete();
   }
 
   /** Diff-based sync from storage (called on file system change for LiveShare sync) */
-  syncFromStorage(): void {
-    const stored = loadThreads(this.workspaceRoot);
+  async syncFromStorage(): Promise<void> {
+    const stored = await loadThreads(this.workspaceFolder);
     const storedById = new Map(stored.map((st) => [st.id, st]));
 
     // Remove threads that no longer exist in storage
@@ -204,5 +201,4 @@ export class ReviewCommentController {
     }
     return undefined;
   }
-
 }
