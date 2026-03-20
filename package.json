@@ -34,6 +34,12 @@
       {
         "command": "liveshareReviewComments.deleteThread",
         "title": "Delete Thread"
+      },
+      {
+        "command": "liveshareReviewComments.clearAllComments",
+        "title": "Clear All Review Comments",
+        "category": "LiveShare Review Comments",
+        "icon": "$(clear-all)"
       }
     ],
     "menus": {
@@ -42,7 +48,8 @@
         { "command": "liveshareReviewComments.copyToClipboard" },
         { "command": "liveshareReviewComments.replyToThread", "when": "false" },
         { "command": "liveshareReviewComments.deleteComment", "when": "false" },
-        { "command": "liveshareReviewComments.deleteThread", "when": "false" }
+        { "command": "liveshareReviewComments.deleteThread", "when": "false" },
+        { "command": "liveshareReviewComments.clearAllComments" }
       ],
       "comments/commentThread/context": [
         {
@@ -60,6 +67,10 @@
         {
           "command": "liveshareReviewComments.deleteThread",
           "group": "inline@1"
+        },
+        {
+          "command": "liveshareReviewComments.clearAllComments",
+          "group": "inline@2"
         }
       ]
     }

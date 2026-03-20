@@ -187,6 +187,16 @@ export class ReviewCommentController {
     }
   }
 
+  async clearAllThreads(): Promise<void> {
+    for (const entry of this.threads.values()) {
+      entry.vt.dispose();
+    }
+    this.threads.clear();
+    await saveThreads(this.workspaceFolder, []).catch((err: unknown) => {
+      vscode.window.showErrorMessage(`LiveShare Review Comments: Failed to save — ${String(err)}`);
+    });
+  }
+
   getAllThreads(): StoredThread[] {
     return [...this.threads.values()].map((e) => e.st);
   }
