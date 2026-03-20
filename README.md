@@ -117,6 +117,7 @@ VS CodeのLive Share拡張機能からセッションを開始し、参加者を
 |---------|------|
 | `LiveShare Review Comments: Export for AI` | 全コメントを `liveshare-review-comments.md` に出力 |
 | `LiveShare Review Comments: Copy to Clipboard` | 全コメントをMarkdownとしてクリップボードにコピー |
+| `LiveShare Review Comments: Clear All Review Comments` | 全コメントを一括削除 |
 
 ## 開発方法
 

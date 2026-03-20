@@ -80,6 +80,20 @@ export function activate(context: vscode.ExtensionContext): void {
       await copyToClipboard(threads);
     })
   );
+
+  // Command: Clear All Comments
+  context.subscriptions.push(
+    vscode.commands.registerCommand('liveshareReviewComments.clearAllComments', async () => {
+      const answer = await vscode.window.showWarningMessage(
+        'Delete all review comments?',
+        { modal: true },
+        'Yes'
+      );
+      if (answer === 'Yes') {
+        await controller.clearAllThreads();
+      }
+    })
+  );
 }
 
 export function deactivate(): void {
