@@ -38,8 +38,7 @@
       {
         "command": "liveshareReviewComments.clearAllComments",
         "title": "Clear All Review Comments",
-        "category": "LiveShare Review Comments",
-        "icon": "$(clear-all)"
+        "category": "LiveShare Review Comments"
       }
     ],
     "menus": {
@@ -67,10 +66,6 @@
         {
           "command": "liveshareReviewComments.deleteThread",
           "group": "inline@1"
-        },
-        {
-          "command": "liveshareReviewComments.clearAllComments",
-          "group": "inline@2"
         }
       ]
     }
