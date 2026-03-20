@@ -1,0 +1,78 @@
+{
+  "name": "liveshare-review-comments",
+  "displayName": "LiveShare Review Comments",
+  "description": "Persistent inline review comments with AI export for pair programming",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Yuto-M/liveshare-review-comments"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "liveshareReviewComments.exportForAI",
+        "title": "Export Review Comments for AI"
+      },
+      {
+        "command": "liveshareReviewComments.copyToClipboard",
+        "title": "Copy Review Comments to Clipboard"
+      },
+      {
+        "command": "liveshareReviewComments.replyToThread",
+        "title": "Save to JSON"
+      },
+      {
+        "command": "liveshareReviewComments.deleteComment",
+        "title": "Delete Comment"
+      },
+      {
+        "command": "liveshareReviewComments.deleteThread",
+        "title": "Delete Thread"
+      }
+    ],
+    "menus": {
+      "commandPalette": [
+        { "command": "liveshareReviewComments.exportForAI" },
+        { "command": "liveshareReviewComments.copyToClipboard" },
+        { "command": "liveshareReviewComments.replyToThread", "when": "false" },
+        { "command": "liveshareReviewComments.deleteComment", "when": "false" },
+        { "command": "liveshareReviewComments.deleteThread", "when": "false" }
+      ],
+      "comments/commentThread/context": [
+        {
+          "command": "liveshareReviewComments.replyToThread",
+          "group": "inline"
+        }
+      ],
+      "comments/comment/title": [
+        {
+          "command": "liveshareReviewComments.deleteComment",
+          "group": "inline@1"
+        }
+      ],
+      "comments/commentThread/title": [
+        {
+          "command": "liveshareReviewComments.deleteThread",
+          "group": "inline@1"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "node esbuild.js",
+    "watch": "node esbuild.js --watch",
+    "vscode:prepublish": "node esbuild.js --production"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "esbuild": "^0.20.0",
+    "typescript": "^5.3.0"
+  }
+}
