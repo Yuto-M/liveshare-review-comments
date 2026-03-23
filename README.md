@@ -18,7 +18,7 @@ Comments are saved to `.review-comments.json` at the workspace root and synced i
 
 ### 1. Install from VS Code Marketplace
 
-Open the Extensions panel (`Cmd+Shift+X`), search for **LiveShare Review Comments**, and click **Install**.
+Open the Extensions panel (`Cmd+Shift+X` on macOS, `Ctrl+Shift+X` on Windows/Linux), search for **LiveShare Review Comments**, and click **Install**.
 
 > **Note**: For all Live Share participants to see comments in the UI, every guest must also install this extension from the Marketplace.
 
@@ -63,7 +63,7 @@ Type in the reply box at the bottom of a comment thread and click **Save to JSON
 
 ### Exporting for AI
 
-Open the Command Palette (`Cmd+Shift+P`) and run one of the following commands:
+Open the Command Palette (`Cmd+Shift+P` on macOS, `Ctrl+Shift+P` on Windows/Linux) and run one of the following commands:
 
 | Action | Command |
 |--------|---------|
