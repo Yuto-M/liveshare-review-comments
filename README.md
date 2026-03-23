@@ -1,45 +1,30 @@
 # LiveShare Review Comments
 
-VS Liveでのペアプログラミング中に、コードへのレビューコメントを永続化し、AIに渡しやすい形式でエクスポートするためのVS Code拡張機能です。
+> 日本語版は [README.ja.md](README.ja.md) をご覧ください。
 
-コメントはワークスペースルートの `.review-comments.json` に保存され、Live Share経由でセッション参加者間でリアルタイムに同期されます。セッション終了後もコメントは残り、MarkdownとしてクリップボードにコピーしてそのままAIに貼り付けることができます。
+A VS Code extension to persist inline review comments during pair programming with VS Live Share, and export them in a format ready to paste into AI chat.
 
-## 機能
+Comments are saved to `.review-comments.json` at the workspace root and synced in real time between Live Share participants. Comments persist after the session ends and can be copied to the clipboard as Markdown to paste directly into an AI.
 
-- エディター上のコード行にインラインでレビューコメントを追加
-- スレッド形式の複数コメント管理と返信
-- Live Share参加者間でのリアルタイム同期
-- コメントをMarkdown形式でエクスポート（AIへの共有に便利）
-- コメント・スレッドの個別削除
+## Features
 
-## インストール
+- Add inline review comments on any line in the editor
+- Threaded comments with replies
+- Real-time sync between Live Share participants
+- Export comments as Markdown (great for sharing with AI)
+- Delete individual comments or entire threads
 
-### 1. リポジトリをクローンしてVSIXパッケージを作成
+## Installation
 
-```bash
-git clone https://github.com/Yuto-M/liveshare-review-comments.git
-cd liveshare-review-comments
-npm install
-npx vsce package
-```
+### 1. Install from VS Code Marketplace
 
-`liveshare-review-comments-x.x.x.vsix` が生成されます（`vsce package` 実行時にビルドも自動で行われます）。
+Open the Extensions panel (`Cmd+Shift+X` on macOS, `Ctrl+Shift+X` on Windows/Linux), search for **LiveShare Review Comments**, and click **Install**.
 
-### 2. VS Codeにインストール
+> **Note**: For all Live Share participants to see comments in the UI, every guest must also install this extension from the Marketplace.
 
-コマンドパレット（`Cmd+Shift+P`）から:
+### 2. Configure for Live Share
 
-```
-Extensions: Install from VSIX...
-```
-
-生成された `.vsix` ファイルを選択してインストールします。
-
-> **Note**: Live Share参加者全員がコメントをUIで確認するには、ゲスト側も同様の手順でこの拡張機能をインストールする必要があります。
-
-### 3. Live Share向け設定
-
-拡張機能のインストール後、Live Shareを開始する前に、**レビュー対象のプロジェクト**のワークスペースルートで以下を実行してください。
+After installing the extension, before starting a Live Share session, run the following command at the workspace root of the **project being reviewed**:
 
 ```bash
 cat > .vsls.json << 'EOF'
@@ -50,46 +35,42 @@ cat > .vsls.json << 'EOF'
 EOF
 ```
 
-この設定により、Live Shareが `.review-comments.json` を除外せず、参加者間で共有されるようになります。
+This prevents Live Share from excluding `.review-comments.json`, allowing it to be shared between participants.
 
-### 4. Live Shareを開始する
+### 3. Start Live Share
 
-VS CodeのLive Share拡張機能からセッションを開始し、参加者を招待してください。
+Start a session from the Live Share extension in VS Code and invite participants.
 
-以上でセットアップ完了です。コメントを追加すると参加者全員の画面にリアルタイムで反映され、`.review-comments.json` にも自動保存されます。
+Setup is complete. Comments added by any participant will appear on everyone's screen in real time and are automatically saved to `.review-comments.json`.
 
-## 使い方
+## Usage
 
-### コメントを追加する
+### Adding a comment
 
-1. エディター上でコメントしたい行の行番号左にある **コメントアイコン**（ふきだしマーク）をクリック
-2. テキストを入力して **Save to JSON** ボタンをクリック
+1. Click the **comment icon** (speech bubble) to the left of the line number in the editor
+2. Type your text and click **Save to JSON**
 
-コメントがインラインに表示され、`.review-comments.json` に自動保存されます。
+The comment appears inline and is automatically saved to `.review-comments.json`.
 
-### 返信する
+### Replying to a comment
 
-コメントスレッドの下部にある返信欄にテキストを入力して **Save to JSON** をクリックします。
+Type in the reply box at the bottom of a comment thread and click **Save to JSON**.
 
-### コメント・スレッドを削除する
+### Deleting comments and threads
 
-- **コメントを削除**: コメントにカーソルを合わせて **Delete Comment** をクリック
-- **スレッドごと削除**: スレッドのタイトル部分にカーソルを合わせて **Delete Thread** をクリック
+- **Delete a comment**: Hover over the comment and click **Delete Comment**
+- **Delete an entire thread**: Hover over the thread title and click **Delete Thread**
 
-### Live Shareでの同期
+### Exporting for AI
 
-ホスト・ゲストのどちらがコメントを追加・削除しても、`.review-comments.json` が更新され、双方の画面に自動で反映されます。ファイルウォッチャーとポーリング（2秒間隔）の組み合わせで同期します。
+Open the Command Palette (`Cmd+Shift+P` on macOS, `Ctrl+Shift+P` on Windows/Linux) and run one of the following commands:
 
-### AIへエクスポートする
+| Action | Command |
+|--------|---------|
+| Export to Markdown file | `LiveShare Review Comments: Export for AI` |
+| Copy to clipboard | `LiveShare Review Comments: Copy to Clipboard` |
 
-コマンドパレット（`Cmd+Shift+P`）から以下のコマンドを実行します：
-
-| 操作 | コマンド |
-|------|---------|
-| Markdownファイルに出力 | `LiveShare Review Comments: Export for AI` |
-| クリップボードにコピー | `LiveShare Review Comments: Copy to Clipboard` |
-
-エクスポートされるMarkdownの形式例：
+Example of the exported Markdown format:
 
 ```markdown
 # Review Comments
@@ -100,35 +81,35 @@ VS CodeのLive Share拡張機能からセッションを開始し、参加者を
 
 ### L62-L81
 
-**alice**: この関数の戻り値がnullになるケースが考慮されていないので、エラーハンドリングを追加した方がよさそうです。
+**alice**: The return value of this function can be null but that case isn't handled — error handling should be added.
 
 ## src/storage.ts
 
 ### L15
 
-**bob**: パスのバリデーションが抜けています。
+**bob**: Path validation is missing here.
 ```
 
-このMarkdownまたはクリップボードの内容をそのままAIチャットに貼り付けることで、レビュー内容を伝えられます。
+Paste this Markdown (or the clipboard content) directly into an AI chat to share your review.
 
-## コマンド一覧
+## Commands
 
-| コマンド | 説明 |
-|---------|------|
-| `LiveShare Review Comments: Export for AI` | 全コメントを `liveshare-review-comments.md` に出力 |
-| `LiveShare Review Comments: Copy to Clipboard` | 全コメントをMarkdownとしてクリップボードにコピー |
-| `LiveShare Review Comments: Clear All Review Comments` | 全コメントを一括削除 |
+| Command | Description |
+|---------|-------------|
+| `LiveShare Review Comments: Export for AI` | Export all comments to `liveshare-review-comments.md` |
+| `LiveShare Review Comments: Copy to Clipboard` | Copy all comments as Markdown to the clipboard |
+| `LiveShare Review Comments: Clear All Review Comments` | Delete all comments at once |
 
-## 開発方法
+## Development
 
-コントリビューターや拡張機能を修正したい方向けの情報です。フォークして改良していただける場合も歓迎です。
+Information for contributors or anyone who wants to modify the extension. Forks and improvements are welcome.
 
-### 前提条件
+### Prerequisites
 
-- VS Code 1.85.0以上
-- Node.js（npmが使える状態）
+- VS Code 1.85.0 or later
+- Node.js (with npm available)
 
-### セットアップ
+### Setup
 
 ```bash
 git clone https://github.com/Yuto-M/liveshare-review-comments.git
@@ -136,25 +117,25 @@ cd liveshare-review-comments
 npm install
 ```
 
-### 開発の流れ
+### Development workflow
 
-1. `npm run watch` でファイル変更を監視しながらビルドを自動実行
-2. VS Codeで `F5` を押すと、拡張機能がロードされた新しいウィンドウ（Extension Development Host）が起動
-3. コードを変更すると自動でリビルドされるので、Extension Development Hostのウィンドウで `Cmd+R` を押して再読み込み
+1. Run `npm run watch` to watch for file changes and rebuild automatically
+2. Press `F5` in VS Code to open a new Extension Development Host window with the extension loaded
+3. After making code changes, press `Cmd+R` in the Extension Development Host window to reload
 
-### ビルドコマンド
+### Build commands
 
-| コマンド | 説明 |
-|---------|------|
-| `npm run compile` | TypeScriptをビルド |
-| `npm run watch` | ファイル変更を監視して自動ビルド |
+| Command | Description |
+|---------|-------------|
+| `npm run compile` | Build TypeScript |
+| `npm run watch` | Watch for changes and rebuild automatically |
 
-### プロジェクト構成
+### Project structure
 
 ```
 src/
-├── extension.ts          # エントリーポイント、コマンド登録
-├── commentController.ts  # コメントスレッドの管理・同期
-├── storage.ts            # .review-comments.json の読み書き
-└── exporter.ts           # Markdownエクスポート
+├── extension.ts          # Entry point, command registration
+├── commentController.ts  # Comment thread management and sync
+├── storage.ts            # Read/write .review-comments.json
+└── exporter.ts           # Markdown export
 ```
