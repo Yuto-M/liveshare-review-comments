@@ -13,6 +13,13 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const controller = new ReviewCommentController(context, folder);
 
+  context.subscriptions.push(
+    vscode.window.registerTreeDataProvider('liveshareReviewComments.sidebar', {
+      getTreeItem: (e: vscode.TreeItem) => e,
+      getChildren: () => [],
+    })
+  );
+
   async function autoSaveDirtyStorageDoc(): Promise<void> {
     const uri = storageUri(folder);
     const doc = vscode.workspace.textDocuments.find(d => d.uri.toString() === uri.toString());

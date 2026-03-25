@@ -24,7 +24,8 @@
       },
       {
         "command": "liveshareReviewComments.copyToClipboard",
-        "title": "Copy Review Comments to Clipboard"
+        "title": "Copy Review Comments to Clipboard",
+        "icon": "$(copy)"
       },
       {
         "command": "liveshareReviewComments.replyToThread",
@@ -41,10 +42,46 @@
       {
         "command": "liveshareReviewComments.clearAllComments",
         "title": "Clear All Review Comments",
-        "category": "LiveShare Review Comments"
+        "category": "LiveShare Review Comments",
+        "icon": "$(trash)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "liveshare-review-comments-sidebar",
+          "title": "LiveShare Review Comments",
+          "icon": "images/icon-sidebar.svg"
+        }
+      ]
+    },
+    "views": {
+      "liveshare-review-comments-sidebar": [
+        {
+          "id": "liveshareReviewComments.sidebar",
+          "name": ""
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "liveshareReviewComments.sidebar",
+        "contents": "[Copy Comments to Clipboard](command:liveshareReviewComments.copyToClipboard)\n[Clear All Comments](command:liveshareReviewComments.clearAllComments)"
       }
     ],
     "menus": {
+      "view/title": [
+        {
+          "command": "liveshareReviewComments.copyToClipboard",
+          "when": "view == liveshareReviewComments.sidebar",
+          "group": "navigation@1"
+        },
+        {
+          "command": "liveshareReviewComments.clearAllComments",
+          "when": "view == liveshareReviewComments.sidebar",
+          "group": "navigation@2"
+        }
+      ],
       "commandPalette": [
         { "command": "liveshareReviewComments.exportForAI" },
         { "command": "liveshareReviewComments.copyToClipboard" },
