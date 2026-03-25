@@ -13,6 +13,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const controller = new ReviewCommentController(context, folder);
 
+  // viewsWelcome のコンテンツを表示するために空のツリーを登録
   context.subscriptions.push(
     vscode.window.registerTreeDataProvider('liveshareReviewComments.sidebar', {
       getTreeItem: (e: vscode.TreeItem) => e,
