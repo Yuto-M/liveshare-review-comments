@@ -28,6 +28,7 @@ export class ReviewCommentController {
       'LiveShare Review Comments'
     );
     context.subscriptions.push(this.controller);
+    context.subscriptions.push(this._onDidChangeThreads);
     void this.restore();
   }
 
@@ -164,12 +165,14 @@ export class ReviewCommentController {
   async syncFromStorage(): Promise<void> {
     const stored = await loadThreads(this.workspaceFolder);
     const storedById = new Map(stored.map((st) => [st.id, st]));
+    let changed = false;
 
     // Remove threads that no longer exist in storage
     for (const [id, entry] of this.threads) {
       if (!storedById.has(id)) {
         entry.vt.dispose();
         this.threads.delete(id);
+        changed = true;
       }
     }
 
@@ -178,6 +181,7 @@ export class ReviewCommentController {
       if (!existing) {
         // New thread added by peer
         this.createVscodeThread(st);
+        changed = true;
       } else {
         const storedSig = st.comments.map((c) => c.id).join('\0');
         const memSig = existing.st.comments.map((c) => c.id).join('\0');
@@ -186,11 +190,15 @@ export class ReviewCommentController {
           existing.st = st;
           existing.vc = st.comments.map((c) => this.toVscodeComment(c));
           existing.vt.comments = [...existing.vc];
+          changed = true;
         }
         // else: our own write — no-op, no flicker
       }
     }
-    this._onDidChangeThreads.fire();
+
+    if (changed) {
+      this._onDidChangeThreads.fire();
+    }
   }
 
   async clearAllThreads(): Promise<void> {

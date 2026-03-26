@@ -7,11 +7,14 @@ type ReviewTreeItem = FileItem | ThreadItem;
 class FileItem extends vscode.TreeItem {
   readonly kind = 'file' as const;
 
-  constructor(public readonly relativePath: string) {
+  constructor(
+    public readonly relativePath: string,
+    folder: vscode.WorkspaceFolder
+  ) {
     super(relativePath, vscode.TreeItemCollapsibleState.Expanded);
     this.contextValue = 'reviewFile';
     this.iconPath = vscode.ThemeIcon.File;
-    this.resourceUri = vscode.Uri.parse(`file:///${relativePath}`);
+    this.resourceUri = vscode.Uri.joinPath(folder.uri, relativePath);
   }
 }
 
@@ -79,7 +82,7 @@ export class ReviewCommentTreeProvider implements vscode.TreeDataProvider<Review
   private buildFileItems(): FileItem[] {
     const threads = this.controller.getAllThreads();
     const paths = [...new Set(threads.map((t) => t.relativePath))].sort();
-    return paths.map((p) => new FileItem(p));
+    return paths.map((p) => new FileItem(p, this.folder));
   }
 
   private buildThreadItems(relativePath: string): ThreadItem[] {
