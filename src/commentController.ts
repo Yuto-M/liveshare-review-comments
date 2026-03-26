@@ -18,6 +18,9 @@ export class ReviewCommentController {
     { vt: vscode.CommentThread; st: StoredThread; vc: vscode.Comment[] }
   >();
 
+  private readonly _onDidChangeThreads = new vscode.EventEmitter<void>();
+  readonly onDidChangeThreads: vscode.Event<void> = this._onDidChangeThreads.event;
+
   constructor(context: vscode.ExtensionContext, folder: vscode.WorkspaceFolder) {
     this.workspaceFolder = folder;
     this.controller = vscode.comments.createCommentController(
@@ -78,6 +81,7 @@ export class ReviewCommentController {
     await saveThreads(this.workspaceFolder, merged).catch((err: unknown) => {
       vscode.window.showErrorMessage(`LiveShare Review Comments: Failed to save — ${String(err)}`);
     });
+    this._onDidChangeThreads.fire();
   }
 
   // For deletions: write memory as-is so deleted threads are removed from disk.
@@ -87,6 +91,7 @@ export class ReviewCommentController {
     await saveThreads(this.workspaceFolder, all).catch((err: unknown) => {
       vscode.window.showErrorMessage(`LiveShare Review Comments: Failed to save — ${String(err)}`);
     });
+    this._onDidChangeThreads.fire();
   }
 
   /** Called from the reply box inside a thread */
@@ -185,6 +190,7 @@ export class ReviewCommentController {
         // else: our own write — no-op, no flicker
       }
     }
+    this._onDidChangeThreads.fire();
   }
 
   async clearAllThreads(): Promise<void> {
@@ -195,6 +201,7 @@ export class ReviewCommentController {
     await saveThreads(this.workspaceFolder, []).catch((err: unknown) => {
       vscode.window.showErrorMessage(`LiveShare Review Comments: Failed to save — ${String(err)}`);
     });
+    this._onDidChangeThreads.fire();
   }
 
   getAllThreads(): StoredThread[] {
