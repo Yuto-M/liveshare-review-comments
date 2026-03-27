@@ -18,6 +18,9 @@ export class ReviewCommentController {
     { vt: vscode.CommentThread; st: StoredThread; vc: vscode.Comment[] }
   >();
 
+  private readonly _onDidChangeThreads = new vscode.EventEmitter<void>();
+  readonly onDidChangeThreads: vscode.Event<void> = this._onDidChangeThreads.event;
+
   constructor(context: vscode.ExtensionContext, folder: vscode.WorkspaceFolder) {
     this.workspaceFolder = folder;
     this.controller = vscode.comments.createCommentController(
@@ -25,6 +28,7 @@ export class ReviewCommentController {
       'LiveShare Review Comments'
     );
     context.subscriptions.push(this.controller);
+    context.subscriptions.push(this._onDidChangeThreads);
     void this.restore();
   }
 
@@ -78,6 +82,7 @@ export class ReviewCommentController {
     await saveThreads(this.workspaceFolder, merged).catch((err: unknown) => {
       vscode.window.showErrorMessage(`LiveShare Review Comments: Failed to save — ${String(err)}`);
     });
+    this._onDidChangeThreads.fire();
   }
 
   // For deletions: write memory as-is so deleted threads are removed from disk.
@@ -87,6 +92,7 @@ export class ReviewCommentController {
     await saveThreads(this.workspaceFolder, all).catch((err: unknown) => {
       vscode.window.showErrorMessage(`LiveShare Review Comments: Failed to save — ${String(err)}`);
     });
+    this._onDidChangeThreads.fire();
   }
 
   /** Called from the reply box inside a thread */
@@ -159,12 +165,14 @@ export class ReviewCommentController {
   async syncFromStorage(): Promise<void> {
     const stored = await loadThreads(this.workspaceFolder);
     const storedById = new Map(stored.map((st) => [st.id, st]));
+    let changed = false;
 
     // Remove threads that no longer exist in storage
     for (const [id, entry] of this.threads) {
       if (!storedById.has(id)) {
         entry.vt.dispose();
         this.threads.delete(id);
+        changed = true;
       }
     }
 
@@ -173,6 +181,7 @@ export class ReviewCommentController {
       if (!existing) {
         // New thread added by peer
         this.createVscodeThread(st);
+        changed = true;
       } else {
         const storedSig = st.comments.map((c) => c.id).join('\0');
         const memSig = existing.st.comments.map((c) => c.id).join('\0');
@@ -181,9 +190,14 @@ export class ReviewCommentController {
           existing.st = st;
           existing.vc = st.comments.map((c) => this.toVscodeComment(c));
           existing.vt.comments = [...existing.vc];
+          changed = true;
         }
         // else: our own write — no-op, no flicker
       }
+    }
+
+    if (changed) {
+      this._onDidChangeThreads.fire();
     }
   }
 
@@ -195,6 +209,7 @@ export class ReviewCommentController {
     await saveThreads(this.workspaceFolder, []).catch((err: unknown) => {
       vscode.window.showErrorMessage(`LiveShare Review Comments: Failed to save — ${String(err)}`);
     });
+    this._onDidChangeThreads.fire();
   }
 
   getAllThreads(): StoredThread[] {

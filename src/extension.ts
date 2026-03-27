@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import { ReviewCommentController } from './commentController';
 import { watchStorage, storageUri } from './storage';
 import { exportToFile, copyToClipboard } from './exporter';
+import { ReviewCommentTreeProvider } from './treeProvider';
+import type { StoredThread } from './storage';
 
 export function activate(context: vscode.ExtensionContext): void {
   const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -13,12 +15,32 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const controller = new ReviewCommentController(context, folder);
 
-  // viewsWelcome のコンテンツを表示するために空のツリーを登録
+  // サイドバーにコメント一覧ツリーを登録
+  const treeProvider = new ReviewCommentTreeProvider(controller, folder);
   context.subscriptions.push(
-    vscode.window.registerTreeDataProvider('liveshareReviewComments.sidebar', {
-      getTreeItem: (e: vscode.TreeItem) => e,
-      getChildren: () => [],
-    })
+    vscode.window.registerTreeDataProvider('liveshareReviewComments.sidebar', treeProvider)
+  );
+  controller.onDidChangeThreads(() => treeProvider.refresh(), undefined, context.subscriptions);
+
+  // Command: Jump to thread location
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      'liveshareReviewComments.jumpToThread',
+      async (thread: StoredThread, workspaceFolder: vscode.WorkspaceFolder) => {
+        try {
+          const uri = vscode.Uri.joinPath(workspaceFolder.uri, thread.relativePath);
+          const doc = await vscode.workspace.openTextDocument(uri);
+          const pos = new vscode.Position(thread.startLine - 1, 0);
+          await vscode.window.showTextDocument(doc, {
+            selection: new vscode.Range(pos, pos),
+          });
+        } catch {
+          void vscode.window.showErrorMessage(
+            `Review Comments: Could not open ${thread.relativePath}`
+          );
+        }
+      }
+    )
   );
 
   async function autoSaveDirtyStorageDoc(): Promise<void> {

@@ -44,6 +44,10 @@
         "title": "Clear All Review Comments",
         "category": "LiveShare Review Comments",
         "icon": "$(trash)"
+      },
+      {
+        "command": "liveshareReviewComments.jumpToThread",
+        "title": "Jump to Thread"
       }
     ],
     "viewsContainers": {
@@ -66,7 +70,7 @@
     "viewsWelcome": [
       {
         "view": "liveshareReviewComments.sidebar",
-        "contents": "[Copy Comments to Clipboard](command:liveshareReviewComments.copyToClipboard)\n[Clear All Comments](command:liveshareReviewComments.clearAllComments)"
+        "contents": "No review comments yet.\n\nLiveShare review comments will appear here once added. Use the icons above to copy them to the clipboard or clear all comments."
       }
     ],
     "menus": {
@@ -88,7 +92,8 @@
         { "command": "liveshareReviewComments.replyToThread", "when": "false" },
         { "command": "liveshareReviewComments.deleteComment", "when": "false" },
         { "command": "liveshareReviewComments.deleteThread", "when": "false" },
-        { "command": "liveshareReviewComments.clearAllComments" }
+        { "command": "liveshareReviewComments.clearAllComments" },
+        { "command": "liveshareReviewComments.jumpToThread", "when": "false" }
       ],
       "comments/commentThread/context": [
         {
