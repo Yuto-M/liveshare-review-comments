@@ -1,74 +1,44 @@
 # LiveShare Review Comments
 
-VS Live Shareでのペアプログラミング中に、コードへのレビューコメントを永続化し、AIに渡しやすい形式でエクスポートするためのVS Code拡張機能です。
+VS Live Shareにはコードにレビューコメントを残す機能がありません。この拡張機能がそのギャップを埋めます。ペアプログラミング中にインラインでコメントを追加し、リアルタイムで同期し、MarkdownとしてエクスポートしてそのままAIに渡せます。
 
-コメントはワークスペースルートの `.review-comments.json` に保存され、Live Share経由でセッション参加者間でリアルタイムに同期されます。セッション終了後もコメントは残り、MarkdownとしてクリップボードにコピーしてそのままAIに貼り付けることができます。
+![コメントを追加する](https://github.com/user-attachments/assets/bc40a62e-7b2b-4ea3-a0fd-74c88a65947d)
 
 ## 機能
 
-- エディター上のコード行にインラインでレビューコメントを追加
-- スレッド形式の複数コメント管理と返信
-- Live Share参加者間でのリアルタイム同期
-- コメントをMarkdown形式でエクスポート（AIへの共有に便利）
-- コメント・スレッドの個別削除
-
-## インストール
-
-### 1. VS Code Marketplaceからインストール
-
-Extensions パネル（`Cmd+Shift+X` / Windows・Linux は `Ctrl+Shift+X`）を開き、**LiveShare Review Comments** を検索して **Install** をクリックします。
-
-> **Note**: Live Share参加者全員がコメントをUIで確認するには、ゲスト側もMarketplaceから同様にインストールする必要があります。
-
-### 2. Live Share向け設定
-
-拡張機能のインストール後、Live Shareを開始する前に、**レビュー対象のプロジェクト**のワークスペースルートで以下を実行してください。
-
-```bash
-cat > .vsls.json << 'EOF'
-{
-  "$schema": "http://json.schemastore.org/vsls",
-  "gitignore": "none"
-}
-EOF
-```
-
-この設定により、Live Shareが `.review-comments.json` を除外せず、参加者間で共有されるようになります。
-
-### 3. Live Shareを開始する
-
-VS CodeのLive Share拡張機能からセッションを開始し、参加者を招待してください。
-
-以上でセットアップ完了です。コメントを追加すると参加者全員の画面にリアルタイムで反映され、`.review-comments.json` にも自動保存されます。
+- GitHub PRレビューのように、コード行にインラインでレビューコメントを追加
+- スレッド形式で返信・議論
+- Live Share参加者間でリアルタイム同期
+- ワンクリックでMarkdownエクスポート — AIチャットに貼り付けてすぐにフィードバックを取得
 
 ## 使い方
 
 ### コメントを追加する
 
-1. エディター上でコメントしたい行の行番号左にある **コメントアイコン**（ふきだしマーク）をクリック
-2. テキストを入力して **Save to JSON** ボタンをクリック
-
-コメントがインラインに表示され、`.review-comments.json` に自動保存されます。
+行番号の横にある**コメントアイコン**をクリックし、テキストを入力して**Save to JSON**をクリックします。
 
 ### 返信する
 
-コメントスレッドの下部にある返信欄にテキストを入力して **Save to JSON** をクリックします。
+コメントスレッドの下部にある返信欄にテキストを入力して**Save to JSON**をクリックします。
 
-### コメント・スレッドを削除する
+### コピーと削除
 
-- **コメントを削除**: コメントにカーソルを合わせて **Delete Comment** をクリック
-- **スレッドごと削除**: スレッドのタイトル部分にカーソルを合わせて **Delete Thread** をクリック
+- **クリップボードにコピー**: コマンドパレットから`LiveShare Review Comments: Copy to Clipboard`を実行
+- **コメントを削除**: コメントにカーソルを合わせて**Delete Comment**をクリック
+- **スレッドごと削除**: スレッドのタイトル部分にカーソルを合わせて**Delete Thread**をクリック
 
-### AIへエクスポートする
+![コピーと削除](https://github.com/user-attachments/assets/319f488c-9f77-420c-9bca-771e72585d8f)
 
-コマンドパレット（`Cmd+Shift+P` / Windows・Linux は `Ctrl+Shift+P`）から以下のコマンドを実行します：
+## AIへエクスポート
+
+すべてのコメントをMarkdownとしてエクスポートし、AIチャットにそのまま貼り付けられます。
 
 | 操作 | コマンド |
 |------|---------|
-| Markdownファイルに出力 | `LiveShare Review Comments: Export for AI` |
+| ファイルに出力 | `LiveShare Review Comments: Export for AI` |
 | クリップボードにコピー | `LiveShare Review Comments: Copy to Clipboard` |
 
-エクスポートされるMarkdownの形式例：
+出力例：
 
 ```markdown
 # Review Comments
@@ -88,15 +58,40 @@ VS CodeのLive Share拡張機能からセッションを開始し、参加者を
 **bob**: パスのバリデーションが抜けています。
 ```
 
-このMarkdownまたはクリップボードの内容をそのままAIチャットに貼り付けることで、レビュー内容を伝えられます。
-
 ## コマンド一覧
 
 | コマンド | 説明 |
 |---------|------|
-| `LiveShare Review Comments: Export for AI` | 全コメントを `liveshare-review-comments.md` に出力 |
-| `LiveShare Review Comments: Copy to Clipboard` | 全コメントをMarkdownとしてクリップボードにコピー |
-| `LiveShare Review Comments: Clear All Review Comments` | 全コメントを一括削除 |
+| `LiveShare Review Comments: Export for AI` | すべてのコメントを`liveshare-review-comments.md`に出力 |
+| `LiveShare Review Comments: Copy to Clipboard` | すべてのコメントをMarkdownとしてクリップボードにコピー |
+| `LiveShare Review Comments: Clear All Review Comments` | すべてのコメントを一括削除 |
+
+## インストール
+
+### 1. VS Code Marketplaceからインストール
+
+Extensionsパネル（macOSは`Cmd+Shift+X`、Windows・Linuxは`Ctrl+Shift+X`）を開き、**LiveShare Review Comments**を検索して**Install**をクリックします。
+
+> **Note**: Live Share参加者全員がコメントをUIで確認するには、ゲスト側もこの拡張機能をインストールする必要があります。
+
+### 2. Live Share向け設定
+
+Live Shareを開始する前に、レビュー対象プロジェクトのワークスペースルートで以下を実行してください。
+
+```bash
+cat > .vsls.json << 'EOF'
+{
+  "$schema": "http://json.schemastore.org/vsls",
+  "gitignore": "none"
+}
+EOF
+```
+
+これにより`.review-comments.json`が参加者間で共有されるようになります。
+
+### 3. Live Shareを開始する
+
+セッションを開始し、参加者を招待してください。コメントはリアルタイムで同期され、`.review-comments.json`に保持されます。
 
 ## 開発方法
 
@@ -117,9 +112,9 @@ npm install
 
 ### 開発の流れ
 
-1. `npm run watch` でファイル変更を監視しながらビルドを自動実行
-2. VS Codeで `F5` を押すと、拡張機能がロードされた新しいウィンドウ（Extension Development Host）が起動
-3. コードを変更すると自動でリビルドされるので、Extension Development Hostのウィンドウで `Cmd+R` を押して再読み込み
+1. `npm run watch`でファイル変更を監視しながらビルドを自動実行
+2. VS Codeで`F5`を押すと、拡張機能がロードされた新しいウィンドウ（Extension Development Host）が起動
+3. コードを変更すると自動でリビルドされるので、Extension Development Hostのウィンドウで`Cmd+R`を押して再読み込み
 
 ### ビルドコマンド
 
