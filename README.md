@@ -1,76 +1,44 @@
 # LiveShare Review Comments
 
-> 日本語版は [README.ja.md](README.ja.md) をご覧ください。
+VS Live Share has no built-in way to leave review comments on code. This extension fills that gap — add inline comments during pair programming, sync them in real time, and export them as Markdown to hand off to an AI.
 
-A VS Code extension to persist inline review comments during pair programming with VS Live Share, and export them in a format ready to paste into AI chat.
-
-Comments are saved to `.review-comments.json` at the workspace root and synced in real time between Live Share participants. Comments persist after the session ends and can be copied to the clipboard as Markdown to paste directly into an AI.
+![Adding a comment](https://github.com/user-attachments/assets/bc40a62e-7b2b-4ea3-a0fd-74c88a65947d)
 
 ## Features
 
-- Add inline review comments on any line in the editor
-- Threaded comments with replies
-- Real-time sync between Live Share participants
-- Export comments as Markdown (great for sharing with AI)
-- Delete individual comments or entire threads
-
-## Installation
-
-### 1. Install from VS Code Marketplace
-
-Open the Extensions panel (`Cmd+Shift+X` on macOS, `Ctrl+Shift+X` on Windows/Linux), search for **LiveShare Review Comments**, and click **Install**.
-
-> **Note**: For all Live Share participants to see comments in the UI, every guest must also install this extension from the Marketplace.
-
-### 2. Configure for Live Share
-
-After installing the extension, before starting a Live Share session, run the following command at the workspace root of the **project being reviewed**:
-
-```bash
-cat > .vsls.json << 'EOF'
-{
-  "$schema": "http://json.schemastore.org/vsls",
-  "gitignore": "none"
-}
-EOF
-```
-
-This prevents Live Share from excluding `.review-comments.json`, allowing it to be shared between participants.
-
-### 3. Start Live Share
-
-Start a session from the Live Share extension in VS Code and invite participants.
-
-Setup is complete. Comments added by any participant will appear on everyone's screen in real time and are automatically saved to `.review-comments.json`.
+- Inline review comments on any line, just like GitHub PR reviews
+- Threaded replies for discussion
+- Real-time sync between all Live Share participants
+- One-click Markdown export — paste directly into an AI chat for instant feedback
 
 ## Usage
 
 ### Adding a comment
 
-1. Click the **comment icon** (speech bubble) to the left of the line number in the editor
-2. Type your text and click **Save to JSON**
-
-The comment appears inline and is automatically saved to `.review-comments.json`.
+Click the **comment icon** next to a line number, type your comment, and click **Save to JSON**.
 
 ### Replying to a comment
 
 Type in the reply box at the bottom of a comment thread and click **Save to JSON**.
 
-### Deleting comments and threads
+### Copying & Deleting
 
+- **Copy to clipboard**: Open the Command Palette and run `LiveShare Review Comments: Copy to Clipboard`
 - **Delete a comment**: Hover over the comment and click **Delete Comment**
 - **Delete an entire thread**: Hover over the thread title and click **Delete Thread**
 
-### Exporting for AI
+![Copying and deleting comments](https://github.com/user-attachments/assets/319f488c-9f77-420c-9bca-771e72585d8f)
 
-Open the Command Palette (`Cmd+Shift+P` on macOS, `Ctrl+Shift+P` on Windows/Linux) and run one of the following commands:
+## Exporting for AI
+
+Export all comments as Markdown and paste them directly into an AI chat.
 
 | Action | Command |
 |--------|---------|
-| Export to Markdown file | `LiveShare Review Comments: Export for AI` |
+| Export to file | `LiveShare Review Comments: Export for AI` |
 | Copy to clipboard | `LiveShare Review Comments: Copy to Clipboard` |
 
-Example of the exported Markdown format:
+Example output:
 
 ```markdown
 # Review Comments
@@ -90,8 +58,6 @@ Example of the exported Markdown format:
 **bob**: Path validation is missing here.
 ```
 
-Paste this Markdown (or the clipboard content) directly into an AI chat to share your review.
-
 ## Commands
 
 | Command | Description |
@@ -100,9 +66,36 @@ Paste this Markdown (or the clipboard content) directly into an AI chat to share
 | `LiveShare Review Comments: Copy to Clipboard` | Copy all comments as Markdown to the clipboard |
 | `LiveShare Review Comments: Clear All Review Comments` | Delete all comments at once |
 
+## Installation
+
+### 1. Install from VS Code Marketplace
+
+Open the Extensions panel (`Cmd+Shift+X` on macOS, `Ctrl+Shift+X` on Windows/Linux), search for **LiveShare Review Comments**, and click **Install**.
+
+> **Note**: Every Live Share participant needs to install this extension to see comments in the UI.
+
+### 2. Configure for Live Share
+
+Before starting a Live Share session, run the following at the workspace root of the project being reviewed:
+
+```bash
+cat > .vsls.json << 'EOF'
+{
+  "$schema": "http://json.schemastore.org/vsls",
+  "gitignore": "none"
+}
+EOF
+```
+
+This allows `.review-comments.json` to be shared between participants.
+
+### 3. Start Live Share
+
+Start a session and invite participants. Comments will sync in real time and persist in `.review-comments.json`.
+
 ## Development
 
-Information for contributors or anyone who wants to modify the extension. Forks and improvements are welcome.
+For contributors or anyone who wants to modify the extension. Forks and improvements are welcome.
 
 ### Prerequisites
 

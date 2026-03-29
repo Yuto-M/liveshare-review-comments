@@ -2,7 +2,7 @@
   "name": "liveshare-review-comments",
   "displayName": "LiveShare Review Comments",
   "description": "Persistent inline review comments with AI export for pair programming",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "publisher": "yuto-dev",
   "icon": "images/icon.png",
   "keywords": ["liveshare", "code review", "comments", "pair programming"],
